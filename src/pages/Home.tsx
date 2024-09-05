@@ -19,7 +19,7 @@ const Home = () => {
     const fetchUsers = async () => {
       try {
         const response = await fetch(
-          "https://jsonplaceholder.typicode.com/users"
+          `${import.meta.env.VITE_APP_API_URL}/users`
         );
         const data = await response.json();
         setUsers(data);
@@ -55,7 +55,7 @@ const Home = () => {
     if (editingUser) {
       try {
         const response = await fetch(
-          `https://jsonplaceholder.typicode.com/users/${editingUser.id}`,
+          `${import.meta.env.VITE_APP_API_URL}/users/${editingUser.id}`,
           {
             method: "PUT",
             headers: {
@@ -87,7 +87,7 @@ const Home = () => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
         const response = await fetch(
-          `https://jsonplaceholder.typicode.com/users/${userId}`,
+          `${import.meta.env.VITE_APP_API_URL}/users/${userId}`,
           {
             method: "DELETE",
           }
