@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import SkeletonLoader from "../components/SkeletonLoader";
 import { FaEdit, FaTrashAlt } from "react-icons/fa";
+import CreateUserForm from "../components/CreateUserForm";
 
 interface User {
   id: number;
   name: string;
   email: string;
-  phone: number;
+  phone: string;
 }
 
 const Home = () => {
@@ -105,6 +106,11 @@ const Home = () => {
     }
   };
 
+  const handleUserCreated = (newUser: User) => {
+    // Simulate user creation by adding the new user to the state with an ID
+    setUsers([...users, { ...newUser, id: users.length + 1 }]);
+  };
+
   if (loading)
     return (
       <div className="flex flex-col space-y-4 p-4 max-w-2xl mx-auto">
@@ -123,7 +129,10 @@ const Home = () => {
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4 text-center">Users List</h1>
+      <div className="flex justify-between px-2">
+        <h1 className="text-3xl font-bold mb-4 text-center">Users List</h1>
+        <CreateUserForm onUserCreated={handleUserCreated} />
+      </div>
       <ul className="space-y-4">
         {users.map((user) => (
           <li
