@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import SkeletonLoader from "../components/SkeletonLoader";
-import { FaEdit, FaTrashAlt } from "react-icons/fa";
+import { FaEdit, FaEye, FaTrashAlt } from "react-icons/fa";
 import CreateUserForm from "../components/CreateUserForm";
+import { useNavigate } from "react-router-dom";
 
 interface User {
   id: number;
@@ -16,6 +17,8 @@ const Home = () => {
   const [error, setError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -94,6 +97,7 @@ const Home = () => {
       }
     }
   };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -146,41 +150,63 @@ const Home = () => {
     );
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <div className="flex justify-between px-2 mb-4">
-        <h1 className="text-3xl font-bold text-center">Users List</h1>
-        <CreateUserForm onUserCreated={(newUser) => setUsers([...users, newUser])} />
+    <div className="p-4 max-w-5xl mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between mb-4">
+        <h1 className="text-3xl font-bold text-center mb-4 sm:mb-0">
+          Users List
+        </h1>
+        <CreateUserForm
+          onUserCreated={(newUser) => setUsers([...users, newUser])}
+        />
       </div>
 
-      <table className="min-w-full bg-white shadow-md rounded-lg">
-        <thead>
-          <tr className="bg-gray-200 text-gray-600 text-left">
-            <th className="py-3 px-6">ID</th>
-            <th className="py-3 px-6">Name</th>
-            <th className="py-3 px-6">Email</th>
-            <th className="py-3 px-6">Phone</th>
-            <th className="py-3 px-6">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id} className="border-b">
-              <td className="py-3 px-6">{user.id}</td>
-              <td className="py-3 px-6">{user.name}</td>
-              <td className="py-3 px-6">{user.email}</td>
-              <td className="py-3 px-6">{user.phone}</td>
-              <td className="py-3 px-6">
-                <button onClick={() => handleEditClick(user)} className="mr-4">
-                  <FaEdit className="text-blue-500 text-lg hover:text-blue-700" />
-                </button>
-                <button onClick={() => handleDelete(user.id)}>
-                  <FaTrashAlt className="text-red-500 text-lg hover:text-red-700" />
-                </button>
-              </td>
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white shadow-md rounded-lg">
+          <thead>
+            <tr className="bg-gray-200 text-gray-600 text-left">
+              <th className="py-3 px-4 sm:px-6">ID</th>
+              <th className="py-3 px-4 sm:px-6">Name</th>
+              <th className="py-3 px-4 sm:px-6">Email</th>
+              <th className="py-3 px-4 sm:px-6">Phone</th>
+              <th className="py-3 px-4 sm:px-6">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr
+                key={user.id}
+                className="border-b odd:bg-blue-300 even:bg-green-300"
+              >
+                <td className="py-3 px-4 sm:px-6">{user.id}</td>
+                <td className="py-3 px-4 sm:px-6">{user.name}</td>
+                <td className="py-3 px-4 sm:px-6">{user.email}</td>
+                <td className="py-3 px-4 sm:px-6">{user.phone}</td>
+                <td className="py-3 px-4 sm:px-6">
+                  <button
+                    onClick={() => handleEditClick(user)}
+                    className="mr-4"
+                  >
+                    <FaEdit className="text-blue-500 text-lg hover:text-blue-700" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(user.id)}
+                    className="mr-4"
+                  >
+                    <FaTrashAlt className="text-red-500 text-lg hover:text-red-700" />
+                  </button>
+                  <button
+                    onClick={() =>
+                      navigate(`/user/${user.id}`, { state: user })
+                    }
+                  >
+                    <FaEye className="text-blue-500 text-lg hover:text-blue-700" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -199,7 +225,9 @@ const Home = () => {
                   onChange={handleInputChange}
                   className="mt-1 block w-full p-2 border border-gray-300 rounded"
                 />
-                {formErrors.name && <p className="text-red-500 text-sm">{formErrors.name}</p>}
+                {formErrors.name && (
+                  <p className="text-red-500 text-sm">{formErrors.name}</p>
+                )}
               </div>
               <div className="mb-4">
                 <label htmlFor="email" className="block text-sm font-medium">
@@ -213,7 +241,9 @@ const Home = () => {
                   onChange={handleInputChange}
                   className="mt-1 block w-full p-2 border border-gray-300 rounded"
                 />
-                {formErrors.email && <p className="text-red-500 text-sm">{formErrors.email}</p>}
+                {formErrors.email && (
+                  <p className="text-red-500 text-sm">{formErrors.email}</p>
+                )}
               </div>
               <div className="mb-4">
                 <label htmlFor="phone" className="block text-sm font-medium">
@@ -227,7 +257,9 @@ const Home = () => {
                   onChange={handleInputChange}
                   className="mt-1 block w-full p-2 border border-gray-300 rounded"
                 />
-                {formErrors.phone && <p className="text-red-500 text-sm">{formErrors.phone}</p>}
+                {formErrors.phone && (
+                  <p className="text-red-500 text-sm">{formErrors.phone}</p>
+                )}
               </div>
               <div className="flex justify-end space-x-4">
                 <button
