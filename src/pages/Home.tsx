@@ -15,6 +15,7 @@ const Home = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -37,7 +38,7 @@ const Home = () => {
   }, []);
 
   const handleEditClick = (user: User) => {
-    setEditingUser(user); // Set the user to be edited
+    setEditingUser(user);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,43 +49,31 @@ const Home = () => {
 
   const closeModal = () => {
     setEditingUser(null);
+    setFormErrors({});
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
 
-    if (editingUser) {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_APP_API_URL}/users/${editingUser.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(editingUser),
-          }
-        );
-
-        if (response.ok) {
-          const updatedUser = await response.json();
-          // Simulate updating user in the local state
-          const updatedUsers = users.map((user) =>
-            user.id === editingUser.id ? updatedUser : user
-          );
-          setUsers(updatedUsers);
-          setEditingUser(null); // Hide the form after successful update
-          alert("User updated successfully!");
-        } else {
-          throw new Error("Failed to update user");
-        }
-      } catch (err) {
-        alert("Failed to update user.");
-      }
+    if (!editingUser?.name || editingUser.name.length < 3) {
+      errors.name = "Name is required and must be at least 3 characters.";
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!editingUser?.email || !emailRegex.test(editingUser.email)) {
+      errors.email = "A valid email is required.";
+    }
+
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!editingUser?.phone || !phoneRegex.test(editingUser.phone)) {
+      errors.phone = "Phone number must be a valid 10-digit number.";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
-  const handleDeleteClick = async (userId: number) => {
+  const handleDelete = async (userId: number) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
         const response = await fetch(
@@ -105,10 +94,39 @@ const Home = () => {
       }
     }
   };
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const handleUserCreated = (newUser: User) => {
-    // Simulate user creation by adding the new user to the state with an ID
-    setUsers([...users, { ...newUser, id: users.length + 1 }]);
+    if (validateForm()) {
+      if (editingUser) {
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_APP_API_URL}/users/${editingUser.id}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(editingUser),
+            }
+          );
+
+          if (response.ok) {
+            const updatedUser = await response.json();
+            const updatedUsers = users.map((user) =>
+              user.id === editingUser.id ? updatedUser : user
+            );
+            setUsers(updatedUsers);
+            setEditingUser(null); // Hide the form after successful update
+            alert("User updated successfully!");
+          } else {
+            throw new Error("Failed to update user");
+          }
+        } catch (err) {
+          alert("Failed to update user.");
+        }
+      }
+    }
   };
 
   if (loading)
@@ -128,35 +146,42 @@ const Home = () => {
     );
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <div className="flex justify-between px-2">
-        <h1 className="text-3xl font-bold mb-4 text-center">Users List</h1>
-        <CreateUserForm onUserCreated={handleUserCreated} />
+    <div className="p-4 max-w-4xl mx-auto">
+      <div className="flex justify-between px-2 mb-4">
+        <h1 className="text-3xl font-bold text-center">Users List</h1>
+        <CreateUserForm onUserCreated={(newUser) => setUsers([...users, newUser])} />
       </div>
-      <ul className="space-y-4">
-        {users.map((user) => (
-          <li
-            key={user.id}
-            className="bg-white shadow-lg rounded-lg p-4 flex justify-between items-center"
-          >
-            <div>
-              <h2 className="text-xl font-semibold">{user.name}</h2>
-              <p className="text-gray-600">Email: {user.email}</p>
-              <p className="text-gray-600">Phone: {user.phone}</p>
-            </div>
-            <div className="flex space-x-4">
-              <button onClick={() => handleEditClick(user)}>
-                <FaEdit className="text-blue-500 text-lg hover:text-blue-700" />
-              </button>
-              <button onClick={() => handleDeleteClick(user.id)}>
-                <FaTrashAlt className="text-red-500 text-lg hover:text-red-700" />
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
 
-      {/* Edit User */}
+      <table className="min-w-full bg-white shadow-md rounded-lg">
+        <thead>
+          <tr className="bg-gray-200 text-gray-600 text-left">
+            <th className="py-3 px-6">ID</th>
+            <th className="py-3 px-6">Name</th>
+            <th className="py-3 px-6">Email</th>
+            <th className="py-3 px-6">Phone</th>
+            <th className="py-3 px-6">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user) => (
+            <tr key={user.id} className="border-b">
+              <td className="py-3 px-6">{user.id}</td>
+              <td className="py-3 px-6">{user.name}</td>
+              <td className="py-3 px-6">{user.email}</td>
+              <td className="py-3 px-6">{user.phone}</td>
+              <td className="py-3 px-6">
+                <button onClick={() => handleEditClick(user)} className="mr-4">
+                  <FaEdit className="text-blue-500 text-lg hover:text-blue-700" />
+                </button>
+                <button onClick={() => handleDelete(user.id)}>
+                  <FaTrashAlt className="text-red-500 text-lg hover:text-red-700" />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
       {editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
@@ -174,6 +199,7 @@ const Home = () => {
                   onChange={handleInputChange}
                   className="mt-1 block w-full p-2 border border-gray-300 rounded"
                 />
+                {formErrors.name && <p className="text-red-500 text-sm">{formErrors.name}</p>}
               </div>
               <div className="mb-4">
                 <label htmlFor="email" className="block text-sm font-medium">
@@ -187,6 +213,7 @@ const Home = () => {
                   onChange={handleInputChange}
                   className="mt-1 block w-full p-2 border border-gray-300 rounded"
                 />
+                {formErrors.email && <p className="text-red-500 text-sm">{formErrors.email}</p>}
               </div>
               <div className="mb-4">
                 <label htmlFor="phone" className="block text-sm font-medium">
@@ -200,6 +227,7 @@ const Home = () => {
                   onChange={handleInputChange}
                   className="mt-1 block w-full p-2 border border-gray-300 rounded"
                 />
+                {formErrors.phone && <p className="text-red-500 text-sm">{formErrors.phone}</p>}
               </div>
               <div className="flex justify-end space-x-4">
                 <button

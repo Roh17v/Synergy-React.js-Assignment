@@ -17,41 +17,70 @@ const CreateUserForm: React.FC<{ onUserCreated: (user: User) => void }> = ({
   const [phone, setPhone] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
+  // Validation logic
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+
+    if (!name || name.length < 3) {
+      errors.name = "Name is required and must be at least 3 characters.";
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      errors.email = "A valid email is required.";
+    }
+
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phone || !phoneRegex.test(phone)) {
+      errors.phone = "Phone number must be a valid 10-digit number.";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle form submission
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true); // Set loading state to true
+    setIsLoading(true);
 
-    setName("");
-    setEmail("");
-    setPhone("");
+    if (validateForm()) {
+      // Reset form fields
+      setName("");
+      setEmail("");
+      setPhone("");
 
-    const newUser = {
-      id: Math.random(), // Temporary ID
-      name,
-      email,
-      phone,
-    };
+      const newUser = {
+        id: Math.random(), // Temporary ID
+        name,
+        email,
+        phone,
+      };
 
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_APP_API_URL}/users`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newUser),
-        }
-      );
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_APP_API_URL}/users`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newUser),
+          }
+        );
 
-      const createdUser = await response.json();
-      onUserCreated(createdUser);
-      setIsOpen(false); // Close modal after submission
-    } catch (error) {
-      console.error("Error creating user:", error);
-    } finally {
-      setIsLoading(false); // Set loading state to false after completion
+        const createdUser = await response.json();
+        onUserCreated(createdUser);
+        setIsOpen(false); // Close modal after submission
+      } catch (error) {
+        console.error("Error creating user:", error);
+      } finally {
+        setIsLoading(false); // Set loading state to false after completion
+      }
+    } else {
+      setIsLoading(false); // Stop loading if validation fails
     }
   };
 
@@ -88,10 +117,13 @@ const CreateUserForm: React.FC<{ onUserCreated: (user: User) => void }> = ({
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    required
                     disabled={isLoading} // Disable input while loading
                   />
+                  {formErrors.name && (
+                    <p className="text-red-500 text-sm">{formErrors.name}</p>
+                  )}
                 </div>
+
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
                     Email:
@@ -101,10 +133,13 @@ const CreateUserForm: React.FC<{ onUserCreated: (user: User) => void }> = ({
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    required
                     disabled={isLoading} // Disable input while loading
                   />
+                  {formErrors.email && (
+                    <p className="text-red-500 text-sm">{formErrors.email}</p>
+                  )}
                 </div>
+
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
                     Phone:
@@ -114,10 +149,13 @@ const CreateUserForm: React.FC<{ onUserCreated: (user: User) => void }> = ({
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    required
                     disabled={isLoading} // Disable input while loading
                   />
+                  {formErrors.phone && (
+                    <p className="text-red-500 text-sm">{formErrors.phone}</p>
+                  )}
                 </div>
+
                 <div className="flex items-center justify-between mt-4">
                   <button
                     className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${
